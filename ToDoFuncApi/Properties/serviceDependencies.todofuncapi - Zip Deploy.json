@@ -6,24 +6,6 @@
       "connectionId": "APPINSIGHTS_CONNECTIONSTRING",
       "secretStore": "AzureAppSettings"
     },
-    "storage2": {
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourcegroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/todofuncapistorage",
-      "type": "storage.azure",
-      "connectionId": "funcapicon",
-      "secretStore": "AzureAppSettings"
-    },
-    "storage3": {
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/todofuncapistorage",
-      "type": "storage.azure",
-      "connectionId": "funcapi",
-      "secretStore": "AzureAppSettings"
-    },
-    "storage4": {
-      "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/todofuncapistorage",
-      "type": "storage.azure",
-      "connectionId": "funcapi",
-      "secretStore": "AzureAppSettings"
-    },
     "storage1": {
       "resourceId": "/subscriptions/[parameters('subscriptionId')]/resourceGroups/[parameters('resourceGroupName')]/providers/Microsoft.Storage/storageAccounts/todofuncapistorage",
       "type": "storage.azure",

@@ -10,6 +10,8 @@ using Newtonsoft.Json;
 using ToDoFuncApi.Models;
 using Microsoft.Azure.Cosmos.Table;
 using System.Linq;
+using Microsoft.Azure.Cosmos.Table.Queryable;
+using Microsoft.Azure.Storage.Blob;
 
 namespace ToDoFuncApi
 {
@@ -72,6 +74,72 @@ namespace ToDoFuncApi
             var response = new TodoItems { Items = result.Select(Mapper.ToItem).ToList() };
 
             return new OkObjectResult(response);
+        } 
+        
+        [FunctionName("Delete")]
+        public static async Task<IActionResult> Delete(
+            [HttpTrigger(AuthorizationLevel.Anonymous, "delete", Route = "todo/{id}")] HttpRequest req,
+            [Table("todoitems", "Todo", "{id}", Connection = "AzureWebJobsStorage")] ItemTableEntity itemToRemove,
+            [Table("todoitems", Connection = "AzureWebJobsStorage")] CloudTable todoTable,
+            string id,
+            ILogger log)
+        {
+            log.LogInformation("Delete Todo item");
+
+            if (string.IsNullOrWhiteSpace(id)) return new BadRequestResult();
+            if (itemToRemove is null) return new NotFoundResult();
+
+
+            //var itemTableToDelete = new ItemTableEntity
+            //{
+            //    PartitionKey = "Todo",
+            //    RowKey = id,
+            //    ETag = "*"
+            //};
+
+            var operation = TableOperation.Delete(itemToRemove);
+            var res = await todoTable.ExecuteAsync(operation);
+
+            var x = 1;
+
+            return new NoContentResult();
+        } 
+        
+        [FunctionName("RemoveCompleted")]
+        public static async Task RemoveCompleted(
+            [TimerTrigger("0 */1 * * * *")] TimerInfo timer,
+            [Table("todoitems", Connection = "AzureWebJobsStorage")] CloudTable todoTable,
+            [Queue("todoqueue", Connection = "AzureWebJobsStorage")] IAsyncCollector<Item> queueItem,
+            ILogger log)
+        {
+            log.LogInformation("RemoveCompleted started...");
+
+            var query = todoTable.CreateQuery<ItemTableEntity>().Where(i => i.Completed == true).AsTableQuery();
+
+            // var query = new TableQuery<ItemTableEntity>().Where(TableQuery.GenerateFilterConditionForBool("Completed", QueryComparisons.Equal, true));
+
+            var result = await todoTable.ExecuteQuerySegmentedAsync(query, null);
+
+            foreach (var item in result)
+            {
+                await queueItem.AddAsync(item.ToItem());
+                await todoTable.ExecuteAsync(TableOperation.Delete(item));
+            }
+
+        }  
+        
+        [FunctionName("GetRemovedFromQueue")]
+        public static async Task GetRemovedFromQueue(
+            [QueueTrigger("todoqueue", Connection = "AzureWebJobsStorage")] Item item,
+            [Blob("done", Connection = "AzureWebJobsStorage")] CloudBlobContainer blobContainer,
+            ILogger log)
+        {
+            log.LogInformation("Queue trigger started...");
+
+            await blobContainer.CreateIfNotExistsAsync();
+            var blob = blobContainer.GetBlockBlobReference($"{item.Id}.txt");
+            await blob.UploadTextAsync($"{item.Text} is completed");
+
         }
         
         

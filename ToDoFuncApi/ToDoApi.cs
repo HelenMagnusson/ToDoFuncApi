@@ -100,47 +100,45 @@ namespace ToDoFuncApi
             var operation = TableOperation.Delete(itemToRemove);
             var res = await todoTable.ExecuteAsync(operation);
 
-            var x = 1;
-
             return new NoContentResult();
         } 
         
-        [FunctionName("RemoveCompleted")]
-        public static async Task RemoveCompleted(
-            [TimerTrigger("0 */1 * * * *")] TimerInfo timer,
-            [Table("todoitems", Connection = "AzureWebJobsStorage")] CloudTable todoTable,
-            [Queue("todoqueue", Connection = "AzureWebJobsStorage")] IAsyncCollector<Item> queueItem,
-            ILogger log)
-        {
-            log.LogInformation("RemoveCompleted started...");
+        //[FunctionName("RemoveCompleted")]
+        //public static async Task RemoveCompleted(
+        //    [TimerTrigger("0 */1 * * * *")] TimerInfo timer,
+        //    [Table("todoitems", Connection = "AzureWebJobsStorage")] CloudTable todoTable,
+        //    [Queue("todoqueue", Connection = "AzureWebJobsStorage")] IAsyncCollector<Item> queueItem,
+        //    ILogger log)
+        //{
+        //    log.LogInformation("RemoveCompleted started...");
 
-            var query = todoTable.CreateQuery<ItemTableEntity>().Where(i => i.Completed == true).AsTableQuery();
+        //    var query = todoTable.CreateQuery<ItemTableEntity>().Where(i => i.Completed == true).AsTableQuery();
 
-            // var query = new TableQuery<ItemTableEntity>().Where(TableQuery.GenerateFilterConditionForBool("Completed", QueryComparisons.Equal, true));
+        //    // var query = new TableQuery<ItemTableEntity>().Where(TableQuery.GenerateFilterConditionForBool("Completed", QueryComparisons.Equal, true));
 
-            var result = await todoTable.ExecuteQuerySegmentedAsync(query, null);
+        //    var result = await todoTable.ExecuteQuerySegmentedAsync(query, null);
 
-            foreach (var item in result)
-            {
-                await queueItem.AddAsync(item.ToItem());
-                await todoTable.ExecuteAsync(TableOperation.Delete(item));
-            }
+        //    foreach (var item in result)
+        //    {
+        //        await queueItem.AddAsync(item.ToItem());
+        //        await todoTable.ExecuteAsync(TableOperation.Delete(item));
+        //    }
 
-        }  
+        //}  
         
-        [FunctionName("GetRemovedFromQueue")]
-        public static async Task GetRemovedFromQueue(
-            [QueueTrigger("todoqueue", Connection = "AzureWebJobsStorage")] Item item,
-            [Blob("done", Connection = "AzureWebJobsStorage")] CloudBlobContainer blobContainer,
-            ILogger log)
-        {
-            log.LogInformation("Queue trigger started...");
+        //[FunctionName("GetRemovedFromQueue")]
+        //public static async Task GetRemovedFromQueue(
+        //    [QueueTrigger("todoqueue", Connection = "AzureWebJobsStorage")] Item item,
+        //    [Blob("done", Connection = "AzureWebJobsStorage")] CloudBlobContainer blobContainer,
+        //    ILogger log)
+        //{
+        //    log.LogInformation("Queue trigger started...");
 
-            await blobContainer.CreateIfNotExistsAsync();
-            var blob = blobContainer.GetBlockBlobReference($"{item.Id}.txt");
-            await blob.UploadTextAsync($"{item.Text} is completed");
+        //    await blobContainer.CreateIfNotExistsAsync();
+        //    var blob = blobContainer.GetBlockBlobReference($"{item.Id}.txt");
+        //    await blob.UploadTextAsync($"{item.Text} is completed");
 
-        }
+        //}
         
         
       
